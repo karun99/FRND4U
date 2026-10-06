@@ -5,10 +5,10 @@ import { ChatWindow } from './components/ChatWindow';
 import { ChatInput } from './components/ChatInput';
 import { Onboarding } from './components/Onboarding';
 import { ApiKeyGate } from './components/ApiKeyGate';
+import { AuthGate } from './components/AuthGate';
 import { initializeChat, sendMessage, setApiKey, getStoredApiKey } from './services/geminiService';
 import type { Message, UserProfile } from './types';
 import { Role } from './types';
-import { FrndIcon } from './components/Icons';
 import { BASE_SYSTEM_INSTRUCTION, STYLE_INSTRUCTIONS, CRISIS_KEYWORDS_REGEX } from './constants';
 
 type AppState = 'apikey' | 'onboarding' | 'disclaimer' | 'chat';
@@ -141,14 +141,7 @@ ${BASE_SYSTEM_INSTRUCTION}
   };
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-light-bg dark:bg-dark-bg font-sans">
-      <header className="flex-shrink-0 flex items-center justify-center p-4 shadow-neumorphic-light dark:shadow-neumorphic-dark z-10">
-        <FrndIcon className="h-8 w-8 text-accent" />
-        <h1 className="text-xl font-semibold text-slate-700 dark:text-slate-200 ml-3 tracking-wider">
-          {profile?.friendName || "FRND4U"}
-        </h1>
-      </header>
-
+    <AuthGate appName="FRND4U">
       <main className="flex-1 flex flex-col overflow-hidden">
         {renderContent()}
       </main>
@@ -156,12 +149,11 @@ ${BASE_SYSTEM_INSTRUCTION}
       {appState === 'disclaimer' && error && (
         <div className="flex-shrink-0 p-4 text-center text-red-500 bg-red-100 dark:bg-red-900/20">{error}</div>
       )}
-      
+
       <footer className="flex-shrink-0 text-center p-3 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
         Owned and trained by NRCM Tutorials, Vijayawada
       </footer>
-
-    </div>
+    </AuthGate>
   );
 }
 
