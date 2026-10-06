@@ -1,24 +1,39 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import type { Chat } from '@google/genai';
 import { Disclaimer } from './components/Disclaimer';
 import { ChatWindow } from './components/ChatWindow';
 import { ChatInput } from './components/ChatInput';
 import { Onboarding } from './components/Onboarding';
-import { initializeChat, sendMessage } from './services/geminiService';
+import { ApiKeyGate } from './components/ApiKeyGate';
+import { initializeChat, sendMessage, setApiKey, getStoredApiKey } from './services/geminiService';
 import type { Message, UserProfile } from './types';
 import { Role } from './types';
 import { FrndIcon } from './components/Icons';
 import { BASE_SYSTEM_INSTRUCTION, STYLE_INSTRUCTIONS, CRISIS_KEYWORDS_REGEX } from './constants';
 
-type AppState = 'onboarding' | 'disclaimer' | 'chat';
+type AppState = 'apikey' | 'onboarding' | 'disclaimer' | 'chat';
 
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [chat, setChat] = useState<Chat | null>(null);
-  const [appState, setAppState] = useState<AppState>('onboarding');
+  const [appState, setAppState] = useState<AppState>('apikey');
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    const storedKey = getStoredApiKey();
+    if (storedKey) {
+      setApiKey(storedKey);
+      setAppState('onboarding');
+    }
+  }, []);
+
+  const handleKeyReady = (key: string) => {
+    setApiKey(key);
+    setError(null);
+    setAppState('onboarding');
+  };
 
   const handleOnboardingComplete = (userProfile: UserProfile) => {
     try {
@@ -106,6 +121,8 @@ ${BASE_SYSTEM_INSTRUCTION}
 
   const renderContent = () => {
     switch(appState) {
+        case 'apikey':
+            return <ApiKeyGate onKeyReady={handleKeyReady} />;
         case 'onboarding':
             return <Onboarding onComplete={handleOnboardingComplete} />;
         case 'disclaimer':
@@ -136,7 +153,7 @@ ${BASE_SYSTEM_INSTRUCTION}
         {renderContent()}
       </main>
 
-      {appState !== 'onboarding' && error && appState !== 'chat' && (
+      {appState === 'disclaimer' && error && (
         <div className="flex-shrink-0 p-4 text-center text-red-500 bg-red-100 dark:bg-red-900/20">{error}</div>
       )}
       

@@ -1,14 +1,32 @@
 
 import { GoogleGenAI, Chat } from '@google/genai';
 
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set.");
+const STORAGE_KEY = 'frnd4u-api-key';
+
+let userApiKey: string | null = null;
+
+export function setApiKey(key: string): void {
+  userApiKey = key.trim() || null;
+  if (userApiKey) {
+    localStorage.setItem(STORAGE_KEY, userApiKey);
+  } else {
+    localStorage.removeItem(STORAGE_KEY);
+  }
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+export function getStoredApiKey(): string | null {
+  return localStorage.getItem(STORAGE_KEY);
+}
+
+function getAI(): GoogleGenAI {
+  if (!userApiKey) {
+    throw new Error('No Gemini API key. Please enter your key to continue.');
+  }
+  return new GoogleGenAI({ apiKey: userApiKey });
+}
 
 export function initializeChat(systemInstruction: string): Chat {
-  const chat = ai.chats.create({
+  const chat = getAI().chats.create({
     model: 'gemini-2.5-flash',
     config: {
       systemInstruction: systemInstruction,
