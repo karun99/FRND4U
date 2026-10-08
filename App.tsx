@@ -1,12 +1,20 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import type { Chat } from '@google/genai';
 import { Disclaimer } from './components/Disclaimer';
 import { ChatWindow } from './components/ChatWindow';
 import { ChatInput } from './components/ChatInput';
 import { Onboarding } from './components/Onboarding';
 import { ApiKeyGate } from './components/ApiKeyGate';
-import { AuthGate } from './components/AuthGate';
-import { initializeChat, sendMessage, setApiKey, getStoredApiKey } from './services/geminiService';
+import { FrndIcon } from './components/Icons';
+import {
+  initializeChat,
+  sendMessage,
+  setApiKey,
+  clearApiKey,
+  getStoredApiKey,
+  getStoredModel,
+  FREE_ROUTER_MODEL,
+  type OpenRouterChat,
+} from './services/openrouter';
 import type { Message, UserProfile } from './types';
 import { Role } from './types';
 import { BASE_SYSTEM_INSTRUCTION, STYLE_INSTRUCTIONS, CRISIS_KEYWORDS_REGEX } from './constants';
@@ -16,23 +24,35 @@ type AppState = 'apikey' | 'onboarding' | 'disclaimer' | 'chat';
 function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [chat, setChat] = useState<Chat | null>(null);
+  const [chat, setChat] = useState<OpenRouterChat | null>(null);
   const [appState, setAppState] = useState<AppState>('apikey');
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [hasKey, setHasKey] = useState<boolean>(() => !!getStoredApiKey());
+  const [modelLabel, setModelLabel] = useState<string>(() => getStoredModel() ?? FREE_ROUTER_MODEL);
 
   useEffect(() => {
-    const storedKey = getStoredApiKey();
-    if (storedKey) {
-      setApiKey(storedKey);
+    if (getStoredApiKey()) {
       setAppState('onboarding');
     }
   }, []);
 
   const handleKeyReady = (key: string) => {
     setApiKey(key);
+    setHasKey(true);
     setError(null);
     setAppState('onboarding');
+  };
+
+  const handleForgetKey = () => {
+    clearApiKey();
+    setHasKey(false);
+    setMessages([]);
+    setProfile(null);
+    setChat(null);
+    setError(null);
+    setModelLabel(FREE_ROUTER_MODEL);
+    setAppState('apikey');
   };
 
   const handleOnboardingComplete = (userProfile: UserProfile) => {
@@ -48,13 +68,13 @@ ${styleInstruction}
 
 ${BASE_SYSTEM_INSTRUCTION}
         `;
-        
+
         const newChat = initializeChat(systemInstruction.trim());
         setChat(newChat);
         setAppState('disclaimer');
     } catch (e) {
         if (e instanceof Error) {
-            setError(`Initialization failed: ${e.message}. Please ensure your API key is configured correctly and refresh the page.`);
+            setError(`Initialization failed: ${e.message}. Please check your OpenRouter key and try again.`);
         } else {
             setError("An unknown error occurred during initialization. Please refresh the page.");
         }
@@ -78,7 +98,7 @@ ${BASE_SYSTEM_INSTRUCTION}
         setMessages(prev => [...prev, emergencyMessage]);
         return; // Stop processing and do not call the AI
     }
-    
+
     setIsLoading(true);
     setError(null);
 
@@ -106,9 +126,10 @@ ${BASE_SYSTEM_INSTRUCTION}
         );
     } finally {
       setIsLoading(false);
+      setModelLabel(getStoredModel() ?? FREE_ROUTER_MODEL);
     }
   }, [chat, isLoading]);
-  
+
   const handleAcceptDisclaimer = () => {
     setAppState('chat');
     if (profile) {
@@ -136,12 +157,38 @@ ${BASE_SYSTEM_INSTRUCTION}
                 </div>
             );
         default:
-            return <div>Error: Invalid application state.</div>
+            return <div>Error: Invalid application state.</div>;
     }
   };
 
   return (
-    <AuthGate appName="FRND4U">
+    <div className="flex flex-col h-screen max-h-screen bg-light-bg dark:bg-dark-bg font-sans">
+      <header className="flex-shrink-0 flex items-center justify-center px-4 py-3 shadow-neumorphic-light dark:shadow-neumorphic-dark z-10 gap-3">
+        <FrndIcon className="h-8 w-8 text-accent" />
+        <h1 className="text-xl font-semibold text-slate-700 dark:text-slate-200 tracking-wider">
+          FRND4U
+        </h1>
+        <div className="ml-auto flex items-center gap-3">
+          {hasKey && (
+            <span
+              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700 rounded-full px-3 py-1"
+              title="Every reply is routed through an OpenRouter free model"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              free · {modelLabel}
+            </span>
+          )}
+          {hasKey && (
+            <button
+              onClick={handleForgetKey}
+              className="text-sm px-3 py-1.5 rounded-full text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            >
+              Sign out
+            </button>
+          )}
+        </div>
+      </header>
+
       <main className="flex-1 flex flex-col overflow-hidden">
         {renderContent()}
       </main>
@@ -153,7 +200,7 @@ ${BASE_SYSTEM_INSTRUCTION}
       <footer className="flex-shrink-0 text-center p-3 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800">
         Owned and trained by NRCM Tutorials, Vijayawada
       </footer>
-    </AuthGate>
+    </div>
   );
 }
 

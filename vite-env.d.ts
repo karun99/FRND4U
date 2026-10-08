@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_GOOGLE_CLIENT_ID?: string;
+  // No environment variables are required. The OpenRouter key is entered
+  // in-app and stored in localStorage.
 }
 
 interface ImportMeta {
