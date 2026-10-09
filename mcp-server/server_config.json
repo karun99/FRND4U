@@ -1,0 +1,21 @@
+{
+  "app": {
+    "name": "frnd4u:-ai-trauma-support-chat",
+    "version": "0.0.0",
+    "description": "FRND4U \u2014 AI companion chat app that runs entirely on free OpenRouter models: private by design, keyless backend, J\u0101taka guardrails in every prompt"
+  },
+  "stack": "node",
+  "routes": [],
+  "pages": [],
+  "base_url": "http://localhost:3000",
+  "module": null,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview"
+  },
+  "server": "mcp-server/server.mjs",
+  "runner": "node",
+  "runner_cmd": "node"
+}
