@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "frnd4u:-ai-trauma-support-chat": {
+      "command": "node",
+      "args": [
+        "mcp-server/server.mjs"
+      ]
+    }
+  }
+}
