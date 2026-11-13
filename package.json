@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('dist-test/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\" && node --test \"dist-test/test/*.test.js\"",
+    "test:coverage": "tsc -p tsconfig.test.json && node -e \"require('node:fs').writeFileSync('dist-test/package.json', '{\\\"type\\\":\\\"commonjs\\\"}')\" && node --test --experimental-test-coverage \"dist-test/test/*.test.js\""
   },
   "dependencies": {
     "react": "^19.1.1",

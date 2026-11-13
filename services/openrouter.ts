@@ -264,6 +264,8 @@ export async function sendMessage(
   if (!key) {
     throw new Error('No OpenRouter key yet. Add your key to continue.');
   }
+  // Narrow once at the top so the async generator below keeps the string type.
+  const apiKey = key;
 
   chat.history.push({ role: 'user', content: message });
   const candidates = await candidateModels();
@@ -277,7 +279,7 @@ export async function sendMessage(
       try {
         const response = await fetch(`${BASE_URL}/chat/completions`, {
           method: 'POST',
-          headers: authHeaders(key),
+          headers: authHeaders(apiKey),
           body: JSON.stringify({
             model,
             stream: true,
